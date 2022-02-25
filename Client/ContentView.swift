@@ -33,11 +33,16 @@ struct ContentView: View {
             else {
                 TextField("Message", text: $outgoingMessage)
                     .multilineTextAlignment(.center)
+                    .padding()
                 
                 Button("Send") {
                     networkSupport.send(message: outgoingMessage)
                     outgoingMessage = ""
                 }
+                .padding()
+                
+                Text(networkSupport.incomingMessage)
+                    .padding()
             }
         }
         .padding()
