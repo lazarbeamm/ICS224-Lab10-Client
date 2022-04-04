@@ -46,5 +46,10 @@ struct ContentView: View {
             }
         }
         .padding()
+        .onChange(of: networkSupport.incomingMessage){ newValue in
+            // Handle incoming message here
+            // This could be request for board state, or a move request (col, row)
+            // If the same incomingMessage is sent twice, this will not trigger a second time (only called on change)
+        }
     }
 }
