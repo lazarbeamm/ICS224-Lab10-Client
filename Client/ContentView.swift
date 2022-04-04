@@ -27,7 +27,7 @@ struct ContentView: View {
         GridItem(.flexible())
     ]
     // Define Data LazyGrid will display
-    let gridData = (1...100).map { "Item \($0)" }
+    let gridData = (1...100).map { "\($0)" }
     
     
     
