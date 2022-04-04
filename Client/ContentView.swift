@@ -54,10 +54,23 @@ struct ContentView: View {
                     .multilineTextAlignment(.center)
                     .padding()
                 
-                // Display Gameboard
+                // Display Gameboard Test
+//                LazyVGrid(columns: gridLayout, spacing: 10){
+//                    ForEach(gridData, id: \.self) { item in
+//                        Text(item)
+//                    }
+//                }
+                
+                // Display Gameboard Real
                 LazyVGrid(columns: gridLayout, spacing: 10){
-                    ForEach(gridData, id: \.self) { item in
-                        Text(item)
+                    ForEach((0...9), id: \.self) { row in
+                        ForEach((0...9), id: \.self) { col in
+                            Button("\(row),\(col)", action: {
+                                // When Player Presses Button (A tile on the grid), transmit info to server
+                                networkSupport.send(message: String("\(row),\(col)"))
+                                outgoingMessage = ""
+                            })
+                        }
                     }
                 }//end of LazyVGrid
                 
