@@ -24,11 +24,7 @@ struct ContentView: View {
         GridItem(.flexible()),
         GridItem(.flexible()),
         GridItem(.flexible())
-    ]
-    // Define Data LazyGrid will display
-    let gridData = (1...100).map { "\($0)" }
-    
-    
+    ]    
     
     var body: some View {
         VStack {
@@ -52,14 +48,7 @@ struct ContentView: View {
                 TextField("Message", text: $outgoingMessage)
                     .multilineTextAlignment(.center)
                     .padding()
-                
-                // Display Gameboard Test
-//                LazyVGrid(columns: gridLayout, spacing: 10){
-//                    ForEach(gridData, id: \.self) { item in
-//                        Text(item)
-//                    }
-//                }
-
+   
                 
                 // Display Gameboard
                 LazyVGrid(columns: gridLayout, spacing: 10){
