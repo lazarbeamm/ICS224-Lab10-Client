@@ -11,7 +11,11 @@ struct ContentView: View {
     @State var message = ""
     @StateObject var networkSupport = NetworkSupport(browse: true)
     @State var outgoingMessage = ""
-    @State var board = Board()
+    @State var lastGuessedRow = 0
+    @State var lastGuessedCol = 0
+    @State var score = 0
+    @State var border = Color.white
+    @EnvironmentObject var board: Board
     // Create layout for LazyGrid to adhere to (in this case, a 10 x 10 grid)
     private var gridLayout = [
         GridItem(.flexible()),
@@ -45,28 +49,44 @@ struct ContentView: View {
                 }
             }
             else {
-                TextField("Message", text: $outgoingMessage)
-                    .multilineTextAlignment(.center)
-                    .padding()
-   
-                
                 // Display Gameboard
                 LazyVGrid(columns: gridLayout, spacing: 10){
-                    ForEach((0...9), id: \.self) { row in
-                        ForEach((0...9), id: \.self) { col in
-
-                            Button("?", action: {
-                                // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                networkSupport.send(message: String("\(row),\(col)"))
-                                outgoingMessage = ""
-                            })
+//                VStack{
+                    
+                    ForEach(board.tiles, id: \.self) { row in
+//                        HStack{
+                        ForEach(row) { cell in
+                                
+                            if (cell.item == nil){
+                                Button("N", action: { // not yet guessed
+                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    lastGuessedCol = cell.colNumber
+                                    lastGuessedRow = cell.rowNumber
+                                    outgoingMessage = ""
+                                })
+                            } else if (cell.item == "Treasure"){
+                                Button("T", action: { // treasure
+                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    lastGuessedCol = cell.colNumber
+                                    lastGuessedRow = cell.rowNumber
+                                    outgoingMessage = ""
+                                })
+                            } else if (cell.item == "Guessed"){
+                                Button("G", action: { // guessed, no treasure
+                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    lastGuessedCol = cell.colNumber
+                                    lastGuessedRow = cell.rowNumber
+                                    outgoingMessage = ""
+                                })
+                            }
                         }
                     }
+                    }
+                    .border(border)
                 }//end of LazyVGrid
-                
-                Text(networkSupport.incomingMessage)
-                    .padding()
-            }
         }
         .padding()
         .onChange(of: networkSupport.incomingMessage){ newValue in
@@ -74,50 +94,63 @@ struct ContentView: View {
             // This could be request for board state, or a move request (col, row)
             // If the same incomingMessage is sent twice, this will not trigger a second time (only called on change)
             
-            // TO DO
-                // IF response from server == "Found Treasure"
-                    // Update The Grid (show treasure at that location)
-                    // Send the upgraded grid to the server
-                // IF response from server == "No Treasure"
-                    // Update the grid (show the image we chose to represent a miss at that location)
-                    // Send the upgraded grid to the server
-            
-            
-            if newValue == "Found Treasure"{
-                // Update The Grid (show treasure at that location)
-            } else if newValue == "No Treasure" {
-                // Update the grid (show no treasure)
+            print(newValue)
+
+            if newValue.starts(with: "Found Treasure"){
+                print("\nTreasure Found At \(lastGuessedRow), \(lastGuessedCol)")
+                board.tiles[lastGuessedRow][lastGuessedCol].item = "Treasure"
+            } else if newValue.starts(with: "No Treasure"){
+                print("\nNothing Found At \(lastGuessedRow), \(lastGuessedCol)")
+                board.tiles[lastGuessedRow][lastGuessedCol].item = "Guessed"
+            } else if newValue.starts(with: "Score"){
+                score += 1
             }
+            
+//            if border == Color.white{
+//                border = Color.yellow
+//            } else {
+//                border = Color.white
+//            }
+            
             
         }
     }
 }
 
-class Tile {
+struct Tile: Identifiable, Hashable {
+    static func == (lhs: Tile, rhs: Tile) -> Bool {
+        return  lhs.id == rhs.id
+    }
+    
+    let id = UUID()
     var item: String?
+    var rowNumber: Int
+    var colNumber: Int
     
-    init(item: String?){
+    init(item: String?, rowNumber: Int, colNumber: Int){
         self.item = item
+        self.rowNumber = rowNumber
+        self.colNumber = colNumber
     }
     
-    deinit{
-        print("Deinitializing Tile")
-    }
+//    deinit{
+//        print("Deinitializing Tile")
+//    }
 }
 
-class Board {
+class Board: ObservableObject {
     let boardSize = 10
     // declare an array of tiles caled tiles
-    var tiles: [[Tile]]
+    @Published var tiles: [[Tile]]
     
     init(){
         // create the tiles array
         tiles = [[Tile]]()
         
-        for _ in 1...boardSize{
+        for i in 0..<boardSize{
             var tileRow = [Tile]()
-            for _ in 1...boardSize{
-                tileRow.append(Tile(item: nil))
+            for j in 0..<boardSize{
+                tileRow.append(Tile(item: nil, rowNumber: i, colNumber: j))
             }
             tiles.append(tileRow)
         }

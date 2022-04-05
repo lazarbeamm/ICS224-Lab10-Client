@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct ClientApp: App {
+    @StateObject var board = Board()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView().environmentObject(board)
         }
     }
 }
+
