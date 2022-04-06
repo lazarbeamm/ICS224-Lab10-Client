@@ -51,16 +51,13 @@ struct ContentView: View {
             else {
                 // Display Gameboard
                 LazyVGrid(columns: gridLayout, spacing: 10){
-//                VStack{
-                    
                     ForEach(board.tiles, id: \.self) { row in
-//                        HStack{
                         ForEach(row) { cell in
                                 
                             if (cell.item == nil){
                                 Button("N", action: { // not yet guessed
                                     // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
                                     lastGuessedCol = cell.colNumber
                                     lastGuessedRow = cell.rowNumber
                                     outgoingMessage = ""
@@ -68,7 +65,7 @@ struct ContentView: View {
                             } else if (cell.item == "Treasure"){
                                 Button("T", action: { // treasure
                                     // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
                                     lastGuessedCol = cell.colNumber
                                     lastGuessedRow = cell.rowNumber
                                     outgoingMessage = ""
@@ -76,7 +73,7 @@ struct ContentView: View {
                             } else if (cell.item == "Guessed"){
                                 Button("G", action: { // guessed, no treasure
                                     // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.colNumber),\(cell.rowNumber)"))
+                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
                                     lastGuessedCol = cell.colNumber
                                     lastGuessedRow = cell.rowNumber
                                     outgoingMessage = ""
@@ -84,9 +81,9 @@ struct ContentView: View {
                             }
                         }
                     }
-                    }
-                    .border(border)
                 }//end of LazyVGrid
+                    .border(border)
+                }
         }
         .padding()
         .onChange(of: networkSupport.incomingMessage){ newValue in
@@ -105,13 +102,6 @@ struct ContentView: View {
             } else if newValue.starts(with: "Score"){
                 score += 1
             }
-            
-//            if border == Color.white{
-//                border = Color.yellow
-//            } else {
-//                border = Color.white
-//            }
-            
             
         }
     }
@@ -150,7 +140,10 @@ class Board: ObservableObject {
         for i in 0..<boardSize{
             var tileRow = [Tile]()
             for j in 0..<boardSize{
-                tileRow.append(Tile(item: nil, rowNumber: i, colNumber: j))
+                let t = Tile(item: nil, rowNumber: i, colNumber: j)
+//                print(t)
+                print(t.id, t.rowNumber, t.colNumber)
+                tileRow.append(t)
             }
             tiles.append(tileRow)
         }
