@@ -13,7 +13,8 @@ struct ContentView: View {
     @State var outgoingMessage = ""
     @State var lastGuessedRow = 0
     @State var lastGuessedCol = 0
-    @State var score = 0
+    @State var playerScore = 0
+    @State var opponentScore = 0
     @State var border = Color.white
     @EnvironmentObject var board: Board
     // Create layout for LazyGrid to adhere to (in this case, a 10 x 10 grid)
@@ -33,8 +34,6 @@ struct ContentView: View {
     var body: some View {
         VStack {
             if !networkSupport.connected {
-                TextField("Message", text: $message)
-                    .multilineTextAlignment(.center)
                 
                 List ($networkSupport.peers, id: \.self) {
                     $peer in
@@ -50,48 +49,52 @@ struct ContentView: View {
             }
             else {
                 // Display Gameboard
+                VStack{
+                    Text("Your Score: \(playerScore)")
+                    Text("Opponents Score: \(opponentScore)")
+                }
+                .padding()
+
+                
                 LazyVGrid(columns: gridLayout, spacing: 10){
-                    ForEach(board.tiles, id: \.self) { row in
-                        ForEach(row) { cell in
-                                
-                            if (cell.item == nil){
+                    ForEach((0..<board.tiles.count), id: \.self) { i in
+                        ForEach((0..<board.tiles.count), id: \.self) { j in
+                            
+                            if(board.tiles[i][j].item == nil){
                                 Button("N", action: { // not yet guessed
-                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
-                                    lastGuessedCol = cell.colNumber
-                                    lastGuessedRow = cell.rowNumber
+                                    networkSupport.send(message: String("\(i),\(j)"))
+                                    lastGuessedCol = j
+                                    lastGuessedRow = i
                                     outgoingMessage = ""
                                 })
-                            } else if (cell.item == "Treasure"){
+                            } else if (board.tiles[i][j].item == "Treasure"){
                                 Button("T", action: { // treasure
                                     // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
-                                    lastGuessedCol = cell.colNumber
-                                    lastGuessedRow = cell.rowNumber
+                                    networkSupport.send(message: String("\(i),\(j)"))
+                                    lastGuessedCol = j
+                                    lastGuessedRow = i
                                     outgoingMessage = ""
                                 })
-                            } else if (cell.item == "Guessed"){
+                            } else if (board.tiles[i][j].item == "Guessed"){
                                 Button("G", action: { // guessed, no treasure
-                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
-                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
-                                    lastGuessedCol = cell.colNumber
-                                    lastGuessedRow = cell.rowNumber
+                                    networkSupport.send(message: String("\(i),\(j)"))
+                                    lastGuessedCol = j
+                                    lastGuessedRow = i
                                     outgoingMessage = ""
                                 })
                             }
                         }
                     }
-                }//end of LazyVGrid
-                    .border(border)
-                }
-        }
+                }//end Lazy
+            }//end else
+        }//end Vstack
         .padding()
         .onChange(of: networkSupport.incomingMessage){ newValue in
             // Handle incoming message here
             // This could be request for board state, or a move request (col, row)
             // If the same incomingMessage is sent twice, this will not trigger a second time (only called on change)
             
-            print(newValue)
+//            print(newValue)
 
             if newValue.starts(with: "Found Treasure"){
                 print("\nTreasure Found At \(lastGuessedRow), \(lastGuessedCol)")
@@ -100,9 +103,8 @@ struct ContentView: View {
                 print("\nNothing Found At \(lastGuessedRow), \(lastGuessedCol)")
                 board.tiles[lastGuessedRow][lastGuessedCol].item = "Guessed"
             } else if newValue.starts(with: "Score"){
-                score += 1
+                playerScore += 1
             }
-            
         }
     }
 }
@@ -122,10 +124,7 @@ struct Tile: Identifiable, Hashable {
         self.rowNumber = rowNumber
         self.colNumber = colNumber
     }
-    
-//    deinit{
-//        print("Deinitializing Tile")
-//    }
+
 }
 
 class Board: ObservableObject {
@@ -142,7 +141,7 @@ class Board: ObservableObject {
             for j in 0..<boardSize{
                 let t = Tile(item: nil, rowNumber: i, colNumber: j)
 //                print(t)
-                print(t.id, t.rowNumber, t.colNumber)
+//                print(t.id, t.rowNumber, t.colNumber)
                 tileRow.append(t)
             }
             tiles.append(tileRow)
@@ -172,3 +171,39 @@ class Board: ObservableObject {
     
 }//end of Board class
 
+
+
+
+//                LazyVGrid(columns: gridLayout, spacing: 10){
+//                    ForEach(board.tiles, id: \.self) { row in
+//                        ForEach(row) { cell in
+//
+//                            if (cell.item == nil){
+//                                Button("N", action: { // not yet guessed
+//                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+//                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
+//                                    lastGuessedCol = cell.colNumber
+//                                    lastGuessedRow = cell.rowNumber
+//                                    outgoingMessage = ""
+//                                })
+//                            } else if (cell.item == "Treasure"){
+//                                Button("T", action: { // treasure
+//                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+//                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
+//                                    lastGuessedCol = cell.colNumber
+//                                    lastGuessedRow = cell.rowNumber
+//                                    outgoingMessage = ""
+//                                })
+//                            } else if (cell.item == "Guessed"){
+//                                Button("G", action: { // guessed, no treasure
+//                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+//                                    networkSupport.send(message: String("\(cell.rowNumber),\(cell.colNumber)"))
+//                                    lastGuessedCol = cell.colNumber
+//                                    lastGuessedRow = cell.rowNumber
+//                                    outgoingMessage = ""
+//                                })
+//                            }
+//                        }
+//                    }
+//                }//end of LazyVGrid
+//                    .border(border)
