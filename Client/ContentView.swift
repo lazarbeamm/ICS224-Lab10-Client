@@ -10,12 +10,12 @@ import SwiftUI
 struct ContentView: View {
     @State var message = ""
     @StateObject var networkSupport = NetworkSupport(browse: true)
-    @State var outgoingMessage = ""
     @State var lastGuessedRow = 0
     @State var lastGuessedCol = 0
-    @State var playerScore = 0
-    @State var opponentScore = 0
+    @State var p1Score = "0"
+    @State var p3Score = "0"
     @State var border = Color.white
+    @State var gameOver = false
     @EnvironmentObject var board: Board
     // Create layout for LazyGrid to adhere to (in this case, a 10 x 10 grid)
     private var gridLayout = [
@@ -48,72 +48,91 @@ struct ContentView: View {
                 }
             }
             else {
-                // Display Gameboard
-                VStack{
-                    Text("Your Score: \(playerScore)")
-                    Text("Opponents Score: \(opponentScore)")
-                }
-                .padding()
+                if gameOver == false{
+                    // Display Scores
+                    VStack{
+                        Text("P1: \(p1Score)")
+                        Text("P2: \(p3Score)")
+                    }
+                    .padding()
 
-                
-                LazyVGrid(columns: gridLayout, spacing: 10){
-                    ForEach((0..<board.tiles.count), id: \.self) { i in
-                        ForEach((0..<board.tiles.count), id: \.self) { j in
-                            
-                            if(board.tiles[i][j].item == nil){
-                                Button(action: {
-                                    networkSupport.send(message: String("\(i),\(j)"))
-                                    print("Sending: \(i),\(j)")
-                                    lastGuessedCol = j
-                                    lastGuessedRow = i
-                                    outgoingMessage = ""
-                                }) {
-                                    Image(systemName: "circle")
-                                }
-                            } else if (board.tiles[i][j].item == "Treasure"){
-                                Button(action: {
-                                    networkSupport.send(message: String("\(i),\(j)"))
-                                    print("Sending: \(i),\(j)")
-                                    lastGuessedCol = j
-                                    lastGuessedRow = i
-                                    outgoingMessage = ""
-                                }) {
-                                    Image(systemName: "mustache.fill")
-                                }
-                            } else if (board.tiles[i][j].item == "Guessed"){
-                                Button(action: {
-                                    networkSupport.send(message: String("\(i),\(j)"))
-                                    print("Sending: \(i),\(j)")
-                                    lastGuessedCol = j
-                                    lastGuessedRow = i
-                                    outgoingMessage = ""
-                                }) {
-                                    Image(systemName: "circle.fill")
+                    // Display Gameboard
+                    LazyVGrid(columns: gridLayout, spacing: 10){
+                        ForEach((0..<board.tiles.count), id: \.self) { i in //row
+                            ForEach((0..<board.tiles.count), id: \.self) { j in //col
+                                
+                                if(board.tiles[i][j].item == nil){
+                                    Button(action: {
+                                        networkSupport.send(message: String("\(i),\(j)"))
+                                        lastGuessedRow = i
+                                        lastGuessedCol = j
+                                    }) {
+                                        Image(systemName: "circle")
+                                    }
+                                } else if (board.tiles[i][j].item == "Treasure"){
+                                    Button(action: {
+                                        networkSupport.send(message: String("\(i),\(j)"))
+                                        lastGuessedRow = i
+                                        lastGuessedCol = j
+                                    }) {
+                                        Image(systemName: "mustache.fill")
+                                    }
+                                } else if (board.tiles[i][j].item == "Guessed"){
+                                    Button(action: {
+                                        networkSupport.send(message: String("\(i),\(j)"))
+                                        lastGuessedRow = i
+                                        lastGuessedCol = j
+                                    }) {
+                                        Image(systemName: "circle.fill")
+                                    }
                                 }
                             }
                         }
+                    }//end Lazy
+                } else {
+                    if p1Score > p3Score{
+                        Text("Game Over! P1 Wins!")
+                    } else {
+                        Text("Game Over! P2 Wins!")
                     }
-                }//end Lazy
+                   
+                }
+
             }//end else
         }//end Vstack
         .padding()
         .onChange(of: networkSupport.incomingMessage){ newValue in
-            // Handle incoming message here
-            // This could be request for board state, or a move request (col, row)
-            // If the same incomingMessage is sent twice, this will not trigger a second time (only called on change)
             
-//            print(newValue)
+            print("NEW VALUE: \(newValue)")
 
             if newValue.starts(with: "Found Treasure"){
-                print("\nTreasure Found At \(lastGuessedRow), \(lastGuessedCol)")
-                board.tiles[lastGuessedRow][lastGuessedCol].item = "Treasure"
-            } else if newValue.starts(with: "No Treasure"){
-                print("\nNothing Found At \(lastGuessedRow), \(lastGuessedCol)")
-                board.tiles[lastGuessedRow][lastGuessedCol].item = "Guessed"
-            } else if newValue.starts(with: "Score"){
-                playerScore += 1
+                let guessedRow = Array(newValue)[28]
+                let guessedCol = Array(newValue)[40]
+                let tempScore = Array(newValue)[46]
+                let tempOpponentScore = Array(newValue)[49]
+                p1Score = String(tempScore)
+                p3Score = String(tempOpponentScore)
+                print(guessedRow)
+                print(guessedCol)
+                let guessedRowInt = guessedRow.wholeNumberValue
+                let guessedColInt = guessedCol.wholeNumberValue
+                print("\nTreasure Found At \(guessedRow), \(guessedCol)")
+                board.tiles[guessedRowInt!][guessedColInt!].item = "Treasure"
             }
-        }
+            if newValue.starts(with: "No Treasure"){
+                let guessedRow = Array(newValue)[25]
+                let guessedCol = Array(newValue)[37]
+                let guessedRowInt = guessedRow.wholeNumberValue
+                let guessedColInt = guessedCol.wholeNumberValue
+                print("\nNothing Found At \(guessedRow), \(guessedCol)")
+                board.tiles[guessedRowInt!][guessedColInt!].item = "Guessed"
+             }
+            if newValue.starts(with: "Player"){
+                if gameOver != true {
+                    gameOver.toggle()
+                }                
+            }
+        }//end onChange
     }
 }
 
