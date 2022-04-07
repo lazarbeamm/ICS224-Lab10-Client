@@ -61,27 +61,35 @@ struct ContentView: View {
                         ForEach((0..<board.tiles.count), id: \.self) { j in
                             
                             if(board.tiles[i][j].item == nil){
-                                Button("N", action: { // not yet guessed
+                                Button(action: {
                                     networkSupport.send(message: String("\(i),\(j)"))
+                                    print("Sending: \(i),\(j)")
                                     lastGuessedCol = j
                                     lastGuessedRow = i
                                     outgoingMessage = ""
-                                })
+                                }) {
+                                    Image(systemName: "circle")
+                                }
                             } else if (board.tiles[i][j].item == "Treasure"){
-                                Button("T", action: { // treasure
-                                    // When Player Presses Button (A tile on the grid), transmit that grid information to server
+                                Button(action: {
                                     networkSupport.send(message: String("\(i),\(j)"))
+                                    print("Sending: \(i),\(j)")
                                     lastGuessedCol = j
                                     lastGuessedRow = i
                                     outgoingMessage = ""
-                                })
+                                }) {
+                                    Image(systemName: "mustache.fill")
+                                }
                             } else if (board.tiles[i][j].item == "Guessed"){
-                                Button("G", action: { // guessed, no treasure
+                                Button(action: {
                                     networkSupport.send(message: String("\(i),\(j)"))
+                                    print("Sending: \(i),\(j)")
                                     lastGuessedCol = j
                                     lastGuessedRow = i
                                     outgoingMessage = ""
-                                })
+                                }) {
+                                    Image(systemName: "circle.fill")
+                                }
                             }
                         }
                     }
