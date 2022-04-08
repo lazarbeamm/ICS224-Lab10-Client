@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct ClientApp: App {
+    // An instantiation of the Board object, which stores the information pertaining to each of the 100 gameboard tiles
     @StateObject var board = Board()
     var body: some Scene {
         WindowGroup {
